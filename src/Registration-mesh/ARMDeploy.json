@@ -1,0 +1,179 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location": {
+        "type": "string",
+        "metadata": {
+          "description": "Location of the resources (e.g. westus, eastus, westeurope)."
+        }
+      },
+      "AppInsightsKey": {
+        "type": "string",
+        "metadata": {
+          "description": "Aplication Insights instrumentation key"
+        }
+      }
+    },
+    "resources": [
+      {
+        "apiVersion": "2018-07-01-preview",
+        "name": "RegistrationNetwork",
+        "type": "Microsoft.ServiceFabricMesh/networks",
+        "location": "[parameters('location')]",
+        "dependsOn": [],
+        "properties": {
+          "description": "SmartHotel360 network for the internal booking app (registration).",
+          "addressPrefix": "10.0.0.4/22",
+          "ingressConfig": {
+            "layer4": [
+              {
+                "name": "RegistrationWeb.Ingress",
+                "publicPort": "80",
+                "applicationName": "Registration",
+                "serviceName": "RegistrationWeb",
+                "endpointName": "RegistrationWeb.Listener"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "apiVersion": "2018-07-01-preview",
+        "name": "Registration",
+        "type": "Microsoft.ServiceFabricMesh/applications",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "Microsoft.ServiceFabricMesh/networks/RegistrationNetwork"
+        ],
+        "properties": {
+          "description": "Internal booking app (registration)",
+          "services": [
+            {
+              "name": "RegistrationWcf",
+              "properties": {
+                "description": "Registration WCF Service",
+                "osType": "Windows",
+                "codePackages": [
+                  {
+                    "name": "RegistrationWcf",
+                    "image": "mikkelhegn/smarthotelwcf:mesh-1709",
+                    "endpoints": [
+                      {
+                        "name": "RegistrationWcf.Listener",
+                        "port": 88
+                      }
+                    ],
+                    "environmentVariables": [
+                      {
+                        "name": "DefaultConnection",
+                        "value": "Data Source=sqldb;Database=SmartHotel.Registration;User Id=sa;Password=P@SSw0rd!@#$"
+                      },
+                      {
+                        "name": "AppInsightsKey",
+                        "value": "[parameters('AppInsightsKey')]"
+                      }
+                    ],
+                    "resources": {
+                      "requests": {
+                        "cpu": 0.5,
+                        "memoryInGB": 1
+                      }
+                    }
+                  }
+                ],
+                "replicaCount": 1,
+                "networkRefs": [
+                  {
+                    "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'RegistrationNetwork')]"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "RegistrationWeb",
+              "properties": {
+                "description": "Registration Web Site",
+                "osType": "Windows",
+                "codePackages": [
+                  {
+                    "name": "RegistrationWeb",
+                    "image": "mikkelhegn/smarthotelweb:mesh-1709",
+                    "endpoints": [
+                      {
+                        "name": "RegistrationWeb.Listener",
+                        "port": 80
+                      }
+                    ],
+                    "environmentVariables": [
+                      {
+                        "name": "WcfServiceUri",
+                        "value": "http://RegistrationWcf:88/Service.svc"
+                      },
+                      {
+                        "name": "AppInsightsKey",
+                        "value": "[parameters('AppInsightsKey')]"
+                      }
+                    ],
+                    "resources": {
+                      "requests": {
+                        "cpu": 0.5,
+                        "memoryInGB": 1
+                      }
+                    }
+                  }
+                ],
+                "replicaCount": 1,
+                "networkRefs": [
+                  {
+                    "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'RegistrationNetwork')]"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Sqldb",
+              "properties": {
+                "description": "SQL Express",
+                "osType": "Windows",
+                "codePackages": [
+                  {
+                    "name": "sqldb",
+                    "image": "microsoft/mssql-server-windows-express:1709",
+                    "endpoints": [
+                      {
+                        "name": "sqldb.Listener",
+                        "port": 1433
+                      }
+                    ],
+                    "environmentVariables": [
+                      {
+                        "name": "ACCEPT_EULA",
+                        "value": "Y"
+                      },
+                      {
+                        "name": "sa_password",
+                        "value": "P@SSw0rd!@#$"
+                      }
+                    ],
+                    "resources": {
+                      "requests": {
+                        "cpu": 0.5,
+                        "memoryInGB": 1
+                      }
+                    }
+                  }
+                ],
+                "replicaCount": 1,
+                "networkRefs": [
+                  {
+                    "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'RegistrationNetwork')]"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
