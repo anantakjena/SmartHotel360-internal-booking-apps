@@ -1,0 +1,196 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location": {
+        "type": "string",
+        "metadata": {
+          "description": "Location of the resources (e.g. westus, eastus, westeurope)."
+        }
+      },
+      "AppInsightsKey": {
+        "type": "string",
+        "metadata": {
+          "description": "Aplication Insights instrumentation key"
+        }
+      },
+      "sqlAdministratorLogin": {
+        "type": "string",
+        "defaultValue": "sqladmin"
+      },
+      "sqlAdministratorLoginPassword": {
+        "type": "securestring"
+      }
+    },
+    "variables": {
+      "sqlserverName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
+      "databaseName": "registrationdb"
+    },
+    "resources": [
+      {
+        "name": "[variables('sqlserverName')]",
+        "type": "Microsoft.Sql/servers",
+        "location": "[parameters('location')]",
+        "tags": {
+          "displayName": "SqlServer"
+        },
+        "apiVersion": "2014-04-01",
+        "properties": {
+          "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+          "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+          "version": "12.0"
+        },
+        "resources": [
+          {
+            "name": "registrationdb",
+            "type": "databases",
+            "location": "[parameters('location')]",
+            "tags": {
+              "displayName": "Database"
+            },
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+              "[variables('sqlserverName')]"
+            ],
+            "properties": {
+              "edition": "Basic",
+              "collation": "SQL_Latin1_General_CP1_CI_AS",
+              "maxSizeBytes": "1073741824",
+              "requestedServiceObjectiveName": "Basic"
+            }
+          },
+          {
+            "type": "firewallrules",
+            "apiVersion": "2014-04-01",
+            "dependsOn": [
+              "[variables('sqlserverName')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "AllowAllIPs",
+            "properties": {
+              "endIpAddress": "0.0.0.0",
+              "startIpAddress": "0.0.0.0"
+            }
+          }
+        ]
+      },
+      {
+        "apiVersion": "2018-07-01-preview",
+        "name": "RegistrationNetwork",
+        "type": "Microsoft.ServiceFabricMesh/networks",
+        "location": "[parameters('location')]",
+        "dependsOn": [],
+        "properties": {
+          "description": "SmartHotel360 network for the internal booking app (registration).",
+          "addressPrefix": "10.0.0.4/22",
+          "ingressConfig": {
+            "layer4": [
+              {
+                "name": "RegistrationWeb.Ingress",
+                "publicPort": "80",
+                "applicationName": "Registration",
+                "serviceName": "RegistrationWeb",
+                "endpointName": "RegistrationWeb.Listener"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "apiVersion": "2018-07-01-preview",
+        "name": "Registration",
+        "type": "Microsoft.ServiceFabricMesh/applications",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "Microsoft.ServiceFabricMesh/networks/RegistrationNetwork"
+        ],
+        "properties": {
+          "description": "Internal booking app (registration)",
+          "services": [
+            {
+              "name": "RegistrationWcf",
+              "properties": {
+                "description": "Registration WCF Service",
+                "osType": "Windows",
+                "codePackages": [
+                  {
+                    "name": "RegistrationWcf",
+                    "image": "mikkelhegn/smarthotelwcf:mesh-1709",
+                    "endpoints": [
+                      {
+                        "name": "RegistrationWcf.Listener",
+                        "port": 88
+                      }
+                    ],
+                    "environmentVariables": [
+                      {
+                        "name": "DefaultConnection",
+                        "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('databaseName'), ';Persist Security Info=False;User Id=', parameters('sqlAdministratorLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';Password=', parameters('sqlAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+                     },
+                     {
+                       "name": "AppInsightsKey",
+                       "value": "[parameters('AppInsightsKey')]"
+                     }
+                    ],
+                    "resources": {
+                      "requests": {
+                        "cpu": 0.5,
+                        "memoryInGB": 1
+                      }
+                    }
+                  }
+                ],
+                "replicaCount": 1,
+                "networkRefs": [
+                  {
+                    "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'RegistrationNetwork')]"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "RegistrationWeb",
+              "properties": {
+                "description": "Registration Web Site",
+                "osType": "Windows",
+                "codePackages": [
+                  {
+                    "name": "RegistrationWeb",
+                    "image": "mikkelhegn/smarthotelweb:mesh-1709",
+                    "endpoints": [
+                      {
+                        "name": "RegistrationWeb.Listener",
+                        "port": 80
+                      }
+                    ],
+                    "environmentVariables": [
+                      {
+                        "name": "WcfServiceUri",
+                        "value": "http://RegistrationWcf:88/Service.svc"
+                      },
+                      {
+                        "name": "AppInsightsKey",
+                        "value": "[parameters('AppInsightsKey')]"
+                      }
+                    ],
+                    "resources": {
+                      "requests": {
+                        "cpu": 0.5,
+                        "memoryInGB": 1
+                      }
+                    }
+                  }
+                ],
+                "replicaCount": 1,
+                "networkRefs": [
+                  {
+                    "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'RegistrationNetwork')]"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
