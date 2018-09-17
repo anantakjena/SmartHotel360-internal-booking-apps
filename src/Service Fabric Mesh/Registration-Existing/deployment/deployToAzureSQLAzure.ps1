@@ -1,8 +1,8 @@
 Param(
     [Parameter(Mandatory=$true)]
     [string]$location,
-    [Parameter(Mandatory=$true)]
-    [string]$AppInsightsKey
+    [Parameter(Mandatory=$false)]
+    [string]$AppInsightsKey = "",
     [Parameter(Mandatory=$true)]
     [string]$ResourceGroupName
 )
