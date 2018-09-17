@@ -115,7 +115,7 @@
                 "codePackages": [
                   {
                     "name": "RegistrationWcf",
-                    "image": "mikkelhegn/smarthotelwcf:mesh-1709",
+                    "image": "mikkelhegn/smarthotelwcf:mesh-1709-KB4343897",
                     "endpoints": [
                       {
                         "name": "RegistrationWcf.Listener",
@@ -156,7 +156,7 @@
                 "codePackages": [
                   {
                     "name": "RegistrationWeb",
-                    "image": "mikkelhegn/smarthotelweb:mesh-1709",
+                    "image": "mikkelhegn/smarthotelweb:mesh-1709-KB4343897",
                     "endpoints": [
                       {
                         "name": "RegistrationWeb.Listener",
