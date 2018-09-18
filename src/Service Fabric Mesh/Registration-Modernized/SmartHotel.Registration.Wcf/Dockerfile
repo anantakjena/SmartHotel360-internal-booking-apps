@@ -8,8 +8,11 @@ Add-WindowsFeature NET-WCF-HTTP-Activation45; \
 Add-WindowsFeature Web-WebSockets
 
 WORKDIR WcfService
+
 RUN powershell -NoProfile -Command \
     Import-module IISAdministration; \
     New-IISSite -Name "WcfService" -PhysicalPath C:\WcfService -BindingInformation "*:88:"
 EXPOSE 88
-COPY bin/Release/Publish .
+
+FROM base AS final
+COPY obj/SFApp/publish .

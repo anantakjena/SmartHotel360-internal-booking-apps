@@ -1,0 +1,14 @@
+## Network definition ##
+network:
+  schemaVersion: 1.0.0-preview2
+  name: SmartHotel_RegistrationApplicationNetwork
+  properties:
+    description: SmartHotel_RegistrationApplicationNetwork description.
+    addressPrefix: 10.0.0.4/22
+    ingressConfig:
+      layer4:
+        - name: SmartHotel_Registration_WebIngress
+          publicPort: 20002
+          applicationName: SmartHotel_RegistrationApplication
+          serviceName: SmartHotel_Registration_Web
+          endpointName: SmartHotel_Registration_WebListener

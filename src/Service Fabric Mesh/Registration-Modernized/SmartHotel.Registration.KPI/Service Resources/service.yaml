@@ -13,10 +13,10 @@ application:
               image: smarthotelregistrationkpi:dev
               endpoints:
                 - name: SmartHotel_Registration_KPIListener
-                  port: 20009
+                  port: 20004
               environmentVariables:
                 - name: ASPNETCORE_URLS
-                  value: http://+:20009
+                  value: http://+:20004
 #                - name: ApplicationInsights:InstrumentationKey
 #                  value: "<Place AppInsights key here, or reference it via a secret>"
               resources:

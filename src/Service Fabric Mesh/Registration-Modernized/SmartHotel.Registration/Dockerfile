@@ -1,3 +1,8 @@
-FROM microsoft/aspnet:4.7.2-20180814-windowsservercore-1709
+FROM microsoft/aspnet:4.7.2-windowsservercore-1709 AS base
 WORKDIR /inetpub/wwwroot
-COPY bin/Release/Publish .
+
+RUN ["powershell", "-Command", "\"Import-Module WebAdministration; New-WebBinding -Name 'Default Web Site' -IPAddress '*' -Port 20002\""] 
+EXPOSE 20002
+
+FROM base AS final
+COPY obj/SFApp/publish .

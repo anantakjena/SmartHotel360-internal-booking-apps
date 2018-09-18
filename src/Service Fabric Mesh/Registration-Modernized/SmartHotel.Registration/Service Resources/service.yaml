@@ -1,0 +1,28 @@
+﻿## Service definition ##
+application:
+  schemaVersion: 1.0.0-preview2
+  name: SmartHotel_RegistrationApplication
+  properties:
+    services:
+      - name: SmartHotel_Registration_Web
+        properties:
+          description: SmartHotel_Registration_Web description.
+          osType: Windows
+          codePackages:
+            - name: SmartHotel_Registration_Web
+              image: smarthotelregistrationweb:dev
+              endpoints:
+                - name: SmartHotel_Registration_WebListener
+                  port: 20002
+              environmentVariables:
+                - name: WcfServiceUri
+                  value: "http://RegistrationWcf:88/Service.svc"
+                - name: AppInsightsKey
+                  value: "<Place AppInsights key here, or reference it via a secret>"
+              resources:
+                requests:
+                  cpu: 0.5
+                  memoryInGB: 1
+          replicaCount: 1
+          networkRefs:
+            - name: SmartHotel_RegistrationApplicationNetwork

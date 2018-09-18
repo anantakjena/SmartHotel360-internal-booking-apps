@@ -2,7 +2,7 @@ FROM microsoft/windowsservercore:1709 AS base
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 RUN Invoke-WebRequest -OutFile stateful_aspnetcore_2.1.ps1 https://aka.ms/sfmesh_stateful_aspnetcore_2.1.ps1; .\stateful_aspnetcore_2.1.ps1;
 WORKDIR /app
-EXPOSE 20009
+EXPOSE 20004
 
 FROM microsoft/dotnet:2.1-sdk AS build
 WORKDIR /src
