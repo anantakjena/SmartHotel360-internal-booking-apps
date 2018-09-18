@@ -1,0 +1,5 @@
+#Deploy
+.\deployToAzureSQLAzure.ps1 -AppInsightsKey 'eed2a462-32b2-4d64-a86e-581a23becb07' -WebReplicaCount 1 -location EastUs -ResourceGroupName SmartHotel360
+
+#Scale
+.\deployToAzureSQLAzure.ps1 -AppInsightsKey 'eed2a462-32b2-4d64-a86e-581a23becb07' -WebReplicaCount 2 -location EastUs -ResourceGroupName SmartHotel360
