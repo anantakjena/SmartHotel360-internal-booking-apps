@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <IsSFAppServiceProject>true</IsSFAppServiceProject>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +12,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.ServiceFabric.Mesh.AspNetCore.Data" Version="1.0.0-beta" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.SFApp.Targets" Version="1.0.0-preview.5.0" />
   </ItemGroup>
 
 </Project>
